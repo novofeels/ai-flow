@@ -10,6 +10,7 @@ export const ENDPOINTS = {
   INDEXES: `${API_BASE_URL}/conversation/indexes`,
   UNARCHIVED_CONVERSATIONS: `${API_BASE_URL}/conversations/False`,
   ARCHIVED_CONVERSATIONS: `${API_BASE_URL}/conversations/True`,
-  
+  UPDATE_CONVERSATION_TITLE: `${API_BASE_URL}/conversation/update/conversationtitle`,
+  TOGGLE_ARCHIVE_STATUS: `${API_BASE_URL}/conversation/isarchieved`,
   // Add other endpoints here as needed
 };

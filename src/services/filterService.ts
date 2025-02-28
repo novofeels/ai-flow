@@ -1,6 +1,5 @@
-// src/services/filterService.ts
-
 import { FilterOptions } from "@/types/filterOptions";
+import { ENDPOINTS } from "@/config/apiConfig";
 
 /**
  * Fetch filter options from the Python backend endpoint.
@@ -13,15 +12,12 @@ export async function getFilterOptions(accessToken: string): Promise<FilterOptio
     throw new Error("No access token provided for getFilterOptions");
   }
 
-  const response = await fetch(
-    "https://prd-think-func.azurewebsites.net/api/conversation/filteroptions",
-    {
-      method: "GET",
-      headers: {
-        Authorization: `Bearer ${accessToken}`,
-      },
-    }
-  );
+  const response = await fetch(ENDPOINTS.FILTER_OPTIONS, {
+    method: "GET",
+    headers: {
+      Authorization: `Bearer ${accessToken}`,
+    },
+  });
 
   if (!response.ok) {
     const errorText = await response.text();

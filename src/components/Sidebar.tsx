@@ -1,18 +1,26 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { FaHistory, FaArchive } from "react-icons/fa";
+import { FaHistory, FaArchive, FaPencilAlt, FaBoxOpen } from "react-icons/fa";
 import { useAppDispatch, useAppSelector } from "@/app/hooks";
 import { 
   fetchUnarchivedConversations, 
   fetchArchivedConversations, 
-  selectConversation 
+  selectConversation,
+  updateConversationTitle,
+  toggleArchiveStatus
 } from "@/features/ConversationsSlice";
 import { Conversation } from "@/types/conversations";
+import { EditTitleModal, ConfirmationModal } from "@/components/modals";
 
 const Sidebar = () => {
   // 'activePanel' tracks which panel (if any) is open.
   const [activePanel, setActivePanel] = useState<string | null>(null);
+  const [editModalOpen, setEditModalOpen] = useState(false);
+  const [confirmModalOpen, setConfirmModalOpen] = useState(false);
+  const [conversationToEdit, setConversationToEdit] = useState<Conversation | null>(null);
+  const [conversationToToggle, setConversationToToggle] = useState<Conversation | null>(null);
+  
   const dispatch = useAppDispatch();
   
   // Get conversation data from Redux
@@ -43,8 +51,47 @@ const Sidebar = () => {
 
   const handleConversationClick = (conversation: Conversation) => {
     dispatch(selectConversation(conversation));
-    // Optionally close the panel after selection on mobile
-    // setActivePanel(null);
+  };
+
+  const handleEditTitle = (e: React.MouseEvent, conversation: Conversation) => {
+    e.stopPropagation(); // Prevent triggering the conversation selection
+    setConversationToEdit(conversation);
+    setEditModalOpen(true);
+  };
+
+  const handleSaveTitle = (newTitle: string) => {
+    if (conversationToEdit) {
+      dispatch(updateConversationTitle({ 
+        conversation: conversationToEdit, 
+        newTitle 
+      }));
+      setEditModalOpen(false);
+      setConversationToEdit(null);
+    }
+  };
+
+  const handleToggleArchive = (e: React.MouseEvent, conversation: Conversation) => {
+    e.stopPropagation(); // Prevent triggering the conversation selection
+    setConversationToToggle(conversation);
+    setConfirmModalOpen(true);
+  };
+
+  const handleConfirmToggleArchive = () => {
+    if (conversationToToggle) {
+      // Set the archive status based on which panel we're in
+      // If in archive panel, we want to unarchive (isArchived = false)
+      // If in history panel, we want to archive (isArchived = true)
+      const newArchiveStatus = activePanel !== 'archive';
+      
+      dispatch(toggleArchiveStatus({ 
+        conversationId: conversationToToggle.id, 
+        isArchived: newArchiveStatus,
+        conversation: conversationToToggle
+      }));
+      
+      setConfirmModalOpen(false);
+      setConversationToToggle(null);
+    }
   };
 
   // Helper function to render conversation list
@@ -71,12 +118,34 @@ const Sidebar = () => {
         {conversations.map((convo) => (
           <li 
             key={convo.id}
-            className={`py-2 px-4 cursor-pointer hover:bg-gray-100 transition-colors ${
+            className={`py-2 px-4 cursor-pointer hover:bg-gray-100 transition-colors relative group ${
               selectedConversation?.id === convo.id ? 'bg-blue-50 border-l-2 border-blue-500' : ''
             }`}
             onClick={() => handleConversationClick(convo)}
           >
-            <div className="font-medium truncate">{convo.title || "Untitled Conversation"}</div>
+            <div className="font-medium truncate pr-16">
+              {convo.title || "Untitled Conversation"}
+            </div>
+            
+            {/* Action icons - only visible on hover or when selected */}
+            <div className="absolute right-2 top-2 flex space-x-2 opacity-0 group-hover:opacity-100 transition-opacity">
+              <button 
+                className="p-1 text-gray-500 hover:text-blue-600 hover:bg-blue-50 rounded"
+                onClick={(e) => handleEditTitle(e, convo)}
+                title="Edit title"
+              >
+                <FaPencilAlt size={14} />
+              </button>
+              
+              <button 
+                className="p-1 text-gray-500 hover:text-amber-600 hover:bg-amber-50 rounded"
+                onClick={(e) => handleToggleArchive(e, convo)}
+                title={type === 'archived' ? "Unarchive" : "Archive"}
+              >
+                {type === 'archived' ? <FaBoxOpen size={14} /> : <FaArchive size={14} />}
+              </button>
+            </div>
+            
             <div className="flex justify-between text-xs text-gray-500 mt-1">
               <span>{new Date(convo.updateDate).toLocaleDateString()}</span>
               <span>{convo.indexValue}</span>
@@ -86,6 +155,19 @@ const Sidebar = () => {
       </ul>
     );
   };
+
+  // Generate confirmation modal text based on the active panel
+  const getConfirmationText = () => {
+    if (!conversationToToggle) return { title: "", message: "" };
+    
+    const action = activePanel === 'archive' ? "unarchive" : "archive";
+    const title = `Confirm ${action}`;
+    const message = `Are you sure you want to ${action} "${conversationToToggle.title || 'Untitled Conversation'}"?`;
+    
+    return { title, message };
+  };
+
+  const confirmationText = getConfirmationText();
 
   return (
     <>
@@ -137,6 +219,31 @@ const Sidebar = () => {
           </div>
         </div>
       </div>
+
+      {/* Edit Title Modal */}
+      <EditTitleModal
+        isOpen={editModalOpen}
+        onClose={() => {
+          setEditModalOpen(false);
+          setConversationToEdit(null);
+        }}
+        onSave={handleSaveTitle}
+        currentTitle={conversationToEdit?.title || ""}
+      />
+
+      {/* Confirmation Modal for Archive/Unarchive */}
+      <ConfirmationModal
+        isOpen={confirmModalOpen}
+        onClose={() => {
+          setConfirmModalOpen(false);
+          setConversationToToggle(null);
+        }}
+        onConfirm={handleConfirmToggleArchive}
+        title={confirmationText.title}
+        message={confirmationText.message}
+        confirmText={activePanel === 'archive' ? "Unarchive" : "Archive"}
+        isDestructive={activePanel !== 'archive'} // Archive is destructive, unarchive is not
+      />
     </>
   );
 };

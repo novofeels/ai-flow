@@ -6,21 +6,21 @@ import { MsalProvider } from "@azure/msal-react";
 import { PublicClientApplication } from "@azure/msal-browser";
 import { msalConfig } from "../msalConfig";
 import { Provider as ReduxProvider } from "react-redux";
+import Topbar from "@/components/Topbar";
+import Sidebar from "@/components/Sidebar";
 import store from "../store";
 
 const msalInstance = new PublicClientApplication(msalConfig);
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
-      <body className="max-h-1">
+      <body>
         <MsalProvider instance={msalInstance}>
           <ReduxProvider store={store}>
-            <div style={{ position: "relative", zIndex: 0 }}>
+            <Topbar />
+            <Sidebar />
+            <div style={{ marginLeft: "4rem", position: "relative", zIndex: 0 }}>
               {children}
             </div>
           </ReduxProvider>

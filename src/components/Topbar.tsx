@@ -6,7 +6,7 @@ import Image from "next/image";
 
 const Topbar = () => {
   return (
-    <header className="bg-gray-800 text-white flex items-center p-4">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-gray-800 text-white flex items-center p-4 shadow-md">
       <div className="flex items-center">
         {/* Replace '/logo.png' with your actual logo path */}
         <Image src="/SHORE-LOGO-BLACK.png" alt="Logo" width={100} height={100} style={{ filter: 'invert(1)' }} className='mr-2'/>
